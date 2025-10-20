@@ -1,0 +1,6 @@
+@IRCloudBackend_HostAddress = http://localhost:5293
+
+GET {{IRCloudBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
