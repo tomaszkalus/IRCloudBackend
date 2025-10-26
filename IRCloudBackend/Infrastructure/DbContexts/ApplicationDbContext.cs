@@ -29,14 +29,14 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
         // Post
         builder.Entity<Post>()
             .HasOne(p => p.Author)
-            .WithMany()
+            .WithMany(u => u.CreatedPosts)
             .HasForeignKey(p => p.AuthorId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Post>()
             .HasOne(p => p.Category)
             .WithMany()
-            .HasForeignKey(p => p.Category)
+            .HasForeignKey(p => p.CategoryId)
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Post>()
@@ -65,6 +65,13 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
         builder.Entity<ConfirmationToken>()
             .HasKey(e => e.Token);
 
+        // User
+        builder.Entity<UserProfile>()
+            .HasMany(u => u.SavedPosts)
+            .WithMany(p => p.SavingUsers);
 
+        builder.Entity<UserProfile>()
+            .HasMany(u => u.FollowedUsers)
+            .WithMany(u => u.FollowingUsers);
     }
 }

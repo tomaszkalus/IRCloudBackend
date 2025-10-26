@@ -1,4 +1,6 @@
-﻿namespace IRCloudBackend.Domain.Models;
+﻿using System.Runtime.InteropServices;
+
+namespace IRCloudBackend.Domain.Models;
 public class Post
 {
     public int Id { get; set; }
@@ -11,4 +13,5 @@ public class Post
     public required Category Category { get; set; }
     public ICollection<IrFile> IrFiles { get; set; } = new List<IrFile>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public ICollection<UserProfile> SavingUsers { get; set; } = new List<UserProfile>();
 }
