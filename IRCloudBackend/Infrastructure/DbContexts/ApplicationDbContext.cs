@@ -45,7 +45,18 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
             .HasForeignKey(f => f.PostId)
             .IsRequired();
 
+        // Post Validation
+        builder.Entity<Post>()
+            .Property(p => p.Title).HasMaxLength(60);
+
+        builder.Entity<Post>()
+            .Property(p => p.Description).HasMaxLength(500);
+
+
         // Review
+        builder.Entity<Review>()
+            .ToTable(tb => tb.HasCheckConstraint("CK_Review_Rating_Range", "rating >= 0 AND rating <= 5"));
+
         builder.Entity<Review>()
             .HasOne(r => r.Post)
             .WithMany(p => p.Reviews)
@@ -57,6 +68,11 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
             .WithMany(e => e.CreatedReviews)
             .HasForeignKey(e => e.AuthorId);
 
+        // Review Validation
+        builder.Entity<Review>()
+            .Property(r => r.Content)
+            .HasMaxLength(500);
+
         // PasswordResetToken
         builder.Entity<PasswordResetToken>()
             .HasKey(e => e.Token);
@@ -65,13 +81,33 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
         builder.Entity<ConfirmationToken>()
             .HasKey(e => e.Token);
 
-        // User
+        // UserProfile
         builder.Entity<UserProfile>()
             .HasMany(u => u.SavedPosts)
             .WithMany(p => p.SavingUsers);
 
         builder.Entity<UserProfile>()
             .HasMany(u => u.FollowedUsers)
-            .WithMany(u => u.FollowingUsers);
+            .WithMany(u => u.FollowingUsers)
+            .UsingEntity<Dictionary<string, object>>(
+                "UserFollows",
+                u => u.HasOne<UserProfile>().WithMany().HasForeignKey("FollowedId"),
+                u => u.HasOne<UserProfile>().WithMany().HasForeignKey("FollowerId")
+            );
+
+        // UserProfile Validation
+        builder.Entity<UserProfile>()
+            .Property(u => u.Bio)
+            .HasMaxLength(500);
+
+        // Category
+        builder.Entity<Category>()
+            .HasOne(c => c.Parent)
+            .WithMany(c => c.Children)
+            .HasForeignKey(c => c.ParentId);
+
+        // PostTag Validation
+        builder.Entity<PostTag>()
+            .Property(p => p.Tag).HasMaxLength(20);
     }
 }

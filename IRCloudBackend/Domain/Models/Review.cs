@@ -9,6 +9,6 @@ public class Review
     public int AuthorId { get; set; }
     public required UserProfile Author { get; set; }
     public required int Rating { get; set; }
-    public string Content { get; set; } = "";
+    public string? Content { get; set; } = "";
     public DateTime CreatedAt { get; set; }
 }
