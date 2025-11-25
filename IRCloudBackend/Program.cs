@@ -1,5 +1,8 @@
 using IRCloudBackend.Infrastructure.DbContexts;
+using IRCloudBackend.Infrastructure.Services;
+
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace IRCloudBackend
 {
@@ -14,7 +17,9 @@ namespace IRCloudBackend
             builder.Services.AddControllers();
 
             builder.Services.AddDbContext<ApplicationDbContext>(
-                options => options.UseNpgsql(builder.Configuration.GetConnectionString("ConnStr")));
+                options => options.UseNpgsql(builder.Configuration.GetConnectionString("ConnStr"))
+                .ReplaceService<ISqlGenerationHelper, NpgsqlSqlGenerationLowercasingHelper>()
+                );
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
