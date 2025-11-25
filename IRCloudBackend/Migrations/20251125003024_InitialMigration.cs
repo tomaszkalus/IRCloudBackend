@@ -57,12 +57,18 @@ namespace IRCloudBackend.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ParentId = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false)
+                    ParentId = table.Column<int>(type: "integer", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Categories_Categories_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "Categories",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -94,8 +100,8 @@ namespace IRCloudBackend.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ApplicationUserGuid = table.Column<Guid>(type: "uuid", nullable: false),
-                    AvatarUrl = table.Column<string>(type: "text", nullable: false),
-                    Bio = table.Column<string>(type: "text", nullable: false)
+                    AvatarUrl = table.Column<string>(type: "text", nullable: true),
+                    Bio = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -239,8 +245,8 @@ namespace IRCloudBackend.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Title = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
+                    Title = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     AuthorId = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CategoryId = table.Column<int>(type: "integer", nullable: false)
@@ -262,24 +268,24 @@ namespace IRCloudBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserProfileUserProfile",
+                name: "UserFollows",
                 columns: table => new
                 {
-                    FollowedUsersId = table.Column<int>(type: "integer", nullable: false),
-                    FollowingUsersId = table.Column<int>(type: "integer", nullable: false)
+                    FollowedId = table.Column<int>(type: "integer", nullable: false),
+                    FollowerId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserProfileUserProfile", x => new { x.FollowedUsersId, x.FollowingUsersId });
+                    table.PrimaryKey("PK_UserFollows", x => new { x.FollowedId, x.FollowerId });
                     table.ForeignKey(
-                        name: "FK_UserProfileUserProfile_UserProfile_FollowedUsersId",
-                        column: x => x.FollowedUsersId,
+                        name: "FK_UserFollows_UserProfile_FollowedId",
+                        column: x => x.FollowedId,
                         principalTable: "UserProfile",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserProfileUserProfile_UserProfile_FollowingUsersId",
-                        column: x => x.FollowingUsersId,
+                        name: "FK_UserFollows_UserProfile_FollowerId",
+                        column: x => x.FollowerId,
                         principalTable: "UserProfile",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -312,7 +318,7 @@ namespace IRCloudBackend.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     PostId = table.Column<int>(type: "integer", nullable: false),
-                    Tag = table.Column<string>(type: "text", nullable: false)
+                    Tag = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -358,12 +364,13 @@ namespace IRCloudBackend.Migrations
                     PostId = table.Column<int>(type: "integer", nullable: false),
                     AuthorId = table.Column<int>(type: "integer", nullable: false),
                     Rating = table.Column<int>(type: "integer", nullable: false),
-                    Content = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Reviews", x => x.Id);
+                    table.CheckConstraint("CK_Review_Rating_Range", "rating >= 0 AND rating <= 5");
                     table.ForeignKey(
                         name: "FK_Reviews_Posts_PostId",
                         column: x => x.PostId,
@@ -416,6 +423,11 @@ namespace IRCloudBackend.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Categories_ParentId",
+                table: "Categories",
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_IrFiles_PostId",
                 table: "IrFiles",
                 column: "PostId");
@@ -451,9 +463,9 @@ namespace IRCloudBackend.Migrations
                 column: "PostId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserProfileUserProfile_FollowingUsersId",
-                table: "UserProfileUserProfile",
-                column: "FollowingUsersId");
+                name: "IX_UserFollows_FollowerId",
+                table: "UserFollows",
+                column: "FollowerId");
         }
 
         /// <inheritdoc />
@@ -493,7 +505,7 @@ namespace IRCloudBackend.Migrations
                 name: "Reviews");
 
             migrationBuilder.DropTable(
-                name: "UserProfileUserProfile");
+                name: "UserFollows");
 
             migrationBuilder.DropTable(
                 name: "Users");

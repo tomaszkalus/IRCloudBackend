@@ -102,8 +102,8 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
 
         // Category
         builder.Entity<Category>()
-            .HasOne(c => c.Parent)
-            .WithMany(c => c.Children)
+            .HasMany(c => c.Children)
+            .WithOne()
             .HasForeignKey(c => c.ParentId);
 
         // PostTag Validation

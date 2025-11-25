@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IRCloudBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251026230744_InitialMigration")]
+    [Migration("20251125003024_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -33,14 +33,19 @@ namespace IRCloudBackend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("ParentId")
+                    b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
 
                     b.ToTable("Categories");
                 });
@@ -86,11 +91,13 @@ namespace IRCloudBackend.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
 
                     b.HasKey("Id");
 
@@ -114,7 +121,8 @@ namespace IRCloudBackend.Migrations
 
                     b.Property<string>("Tag")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -135,8 +143,8 @@ namespace IRCloudBackend.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -153,7 +161,10 @@ namespace IRCloudBackend.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", t =>
+                        {
+                            t.HasCheckConstraint("CK_Review_Rating_Range", "rating >= 0 AND rating <= 5");
+                        });
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.UserProfile", b =>
@@ -168,12 +179,11 @@ namespace IRCloudBackend.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("AvatarUrl")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Bio")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.HasKey("Id");
 
@@ -464,19 +474,28 @@ namespace IRCloudBackend.Migrations
                     b.ToTable("PostUserProfile");
                 });
 
-            modelBuilder.Entity("UserProfileUserProfile", b =>
+            modelBuilder.Entity("UserFollows", b =>
                 {
-                    b.Property<int>("FollowedUsersId")
+                    b.Property<int>("FollowedId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("FollowingUsersId")
+                    b.Property<int>("FollowerId")
                         .HasColumnType("integer");
 
-                    b.HasKey("FollowedUsersId", "FollowingUsersId");
+                    b.HasKey("FollowedId", "FollowerId");
 
-                    b.HasIndex("FollowingUsersId");
+                    b.HasIndex("FollowerId");
 
-                    b.ToTable("UserProfileUserProfile");
+                    b.ToTable("UserFollows");
+                });
+
+            modelBuilder.Entity("IRCloudBackend.Domain.Models.Category", b =>
+                {
+                    b.HasOne("IRCloudBackend.Domain.Models.Category", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.IrFile", b =>
@@ -605,19 +624,24 @@ namespace IRCloudBackend.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("UserProfileUserProfile", b =>
+            modelBuilder.Entity("UserFollows", b =>
                 {
                     b.HasOne("IRCloudBackend.Domain.Models.UserProfile", null)
                         .WithMany()
-                        .HasForeignKey("FollowedUsersId")
+                        .HasForeignKey("FollowedId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("IRCloudBackend.Domain.Models.UserProfile", null)
                         .WithMany()
-                        .HasForeignKey("FollowingUsersId")
+                        .HasForeignKey("FollowerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("IRCloudBackend.Domain.Models.Category", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Post", b =>

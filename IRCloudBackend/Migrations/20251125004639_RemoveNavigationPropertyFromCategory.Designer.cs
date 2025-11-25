@@ -3,6 +3,7 @@ using System;
 using IRCloudBackend.Infrastructure.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IRCloudBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251125004639_RemoveNavigationPropertyFromCategory")]
+    partial class RemoveNavigationPropertyFromCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,6 +33,9 @@ namespace IRCloudBackend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("boolean");
 
@@ -42,7 +48,7 @@ namespace IRCloudBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("Categories");
                 });
@@ -490,7 +496,7 @@ namespace IRCloudBackend.Migrations
                 {
                     b.HasOne("IRCloudBackend.Domain.Models.Category", null)
                         .WithMany("Children")
-                        .HasForeignKey("ParentId");
+                        .HasForeignKey("CategoryId");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.IrFile", b =>
