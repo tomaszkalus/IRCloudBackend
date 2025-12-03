@@ -38,7 +38,7 @@ namespace IRCloudBackend.Controllers
 
         // GET: api/Category/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Category>> GetCategory(int id)
+        public async Task<ActionResult<CategoryDto>> GetCategory(int id)
         {
             var category = await _context.Categories.FindAsync(id);
 
@@ -47,7 +47,8 @@ namespace IRCloudBackend.Controllers
                 return NotFound();
             }
 
-            return category;
+            var dto = category.ToDto();
+            return dto;
         }
 
         // PUT: api/Category/5
@@ -71,7 +72,7 @@ namespace IRCloudBackend.Controllers
         // POST: api/Category
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Category>> AddCategory(UpsertCategoryRequest dto)
+        public async Task<IActionResult> AddCategory(UpsertCategoryRequest dto)
         {
             Category category = dto.ToEntity();
             await _context.Categories.AddAsync(category);
