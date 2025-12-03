@@ -14,6 +14,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     }
 
     public DbSet<ApplicationUser> Users { get; set; }
+    public DbSet<UserProfile> UserProfiles { get; set; }
     public DbSet<ConfirmationToken> ConfirmationTokens { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public DbSet<Category> Categories { get; set; }
