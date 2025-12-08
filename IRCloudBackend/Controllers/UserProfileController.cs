@@ -1,4 +1,6 @@
-﻿using IRCloudBackend.Domain.Models;
+﻿using System.Security.Claims;
+
+using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
 using IRCloudBackend.Infrastructure.DTO.User;
 
@@ -41,42 +43,44 @@ namespace IRCloudBackend.Controllers
         }
 
         // PUT: api/UserProfile/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUserProfile(UpdateUserProfileDTO userProfileDTO)
-        {
-            // TODO
-        }
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> PutUserProfile(UpdateUserProfileDTO userProfileDTO)
+        //{
+        //    string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+
+        //}
 
         // POST: api/UserProfile
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<UserProfile>> PostUserProfile(UserProfile userProfile)
-        {
-            _context.UserProfile.Add(userProfile);
-            await _context.SaveChangesAsync();
+        //[HttpPost]
+        //public async Task<ActionResult<UserProfile>> PostUserProfile(UserProfile userProfile)
+        //{
+        //    _context.UserProfile.Add(userProfile);
+        //    await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUserProfile", new { id = userProfile.Id }, userProfile);
-        }
+        //    return CreatedAtAction("GetUserProfile", new { id = userProfile.Id }, userProfile);
+        //}
 
-        // DELETE: api/UserProfile/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUserProfile(int id)
-        {
-            var userProfile = await _context.UserProfile.FindAsync(id);
-            if (userProfile == null)
-            {
-                return NotFound();
-            }
+        //// DELETE: api/UserProfile/5
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteUserProfile(int id)
+        //{
+        //    var userProfile = await _context.UserProfile.FindAsync(id);
+        //    if (userProfile == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            _context.UserProfile.Remove(userProfile);
-            await _context.SaveChangesAsync();
+        //    _context.UserProfile.Remove(userProfile);
+        //    await _context.SaveChangesAsync();
 
-            return NoContent();
-        }
+        //    return NoContent();
+        //}
 
-        private bool UserProfileExists(int id)
-        {
-            return _context.UserProfile.Any(e => e.Id == id);
-        }
+        //private bool UserProfileExists(int id)
+        //{
+        //    return _context.UserProfile.Any(e => e.Id == id);
+        //}
     }
 }

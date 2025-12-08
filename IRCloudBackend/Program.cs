@@ -1,6 +1,8 @@
 using IRCloudBackend.Infrastructure.DbContexts;
+using IRCloudBackend.Infrastructure.Identity;
 using IRCloudBackend.Infrastructure.Services;
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -21,6 +23,14 @@ namespace IRCloudBackend
                 .ReplaceService<ISqlGenerationHelper, NpgsqlSqlGenerationLowercasingHelper>()
                 );
 
+            builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+
+
+            //builder.Services.Add<IUserMana
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -34,10 +44,10 @@ namespace IRCloudBackend
                 app.UseSwaggerUI();
             }
 
+
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 
