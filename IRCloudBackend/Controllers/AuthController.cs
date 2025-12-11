@@ -46,7 +46,7 @@ public class AuthController : ControllerBase
         }
 
         await transaction.CommitAsync();
-        return Ok(user);
+        return Ok();
     }
 
     [HttpPost]
@@ -89,6 +89,11 @@ public class AuthController : ControllerBase
 
         var tokenHandler = new JsonWebTokenHandler();
         var accessToken = tokenHandler.CreateToken(tokenDescriptor);
-        return Ok(new { AccessToken = accessToken });
+        return Ok(new
+        {
+            AccessToken = accessToken,
+            TokenType = "Bearer",
+            ExpiresIn = TimeSpan.FromMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")).TotalSeconds
+        });
     }
 }
