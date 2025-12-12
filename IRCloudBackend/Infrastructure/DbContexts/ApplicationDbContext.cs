@@ -1,5 +1,6 @@
 ﻿using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.Identity;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Post> Posts { get; set; }
     public DbSet<PostTag> PostTags { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
