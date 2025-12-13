@@ -1,9 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-
-using Humanizer;
+﻿using System.Security.Cryptography;
 
 using IRCloudBackend.Infrastructure.Auth;
 using IRCloudBackend.Infrastructure.DbContexts;
@@ -13,8 +8,6 @@ using IRCloudBackend.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
 
 namespace IRCloudBackend.Controllers;
 [Route("api/[controller]")]
@@ -90,7 +83,8 @@ public class AuthController : ControllerBase
         {
             AccessToken = accessToken,
             ExpiresIn = TimeSpan.FromMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")).TotalSeconds,
-            RefreshToken = refreshToken
+            ExpiresOnUtc = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")),
+            RefreshToken = refreshToken.ToDto(),
         });
     }
 
@@ -102,7 +96,7 @@ public class AuthController : ControllerBase
             .Include(r => r.User)
             .FirstOrDefaultAsync(r => r.Token == token);
 
-        if(refreshToken is null || refreshToken.ExpiresOnUtc < DateTime.UtcNow)
+        if (refreshToken is null || refreshToken.ExpiresOnUtc < DateTime.UtcNow)
         {
             return BadRequest();
         }
@@ -119,7 +113,8 @@ public class AuthController : ControllerBase
         {
             AccessToken = accessToken,
             ExpiresIn = TimeSpan.FromMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")).TotalSeconds,
-            RefreshToken = refreshToken
+            ExpiresOnUtc = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")),
+            RefreshToken = refreshToken.ToDto(),
         });
     }
 }

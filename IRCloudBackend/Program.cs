@@ -1,3 +1,4 @@
+using IRCloudBackend.Infrastructure.Auth;
 using IRCloudBackend.Infrastructure.DbContexts;
 using IRCloudBackend.Infrastructure.Identity;
 using IRCloudBackend.Infrastructure.Services;
@@ -13,9 +14,6 @@ namespace IRCloudBackend
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-
             builder.Services.AddControllers();
 
             builder.Services.AddDbContext<ApplicationDbContext>(
@@ -27,28 +25,20 @@ namespace IRCloudBackend
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
-
-
-            //builder.Services.Add<IUserMana
-
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddScoped<ITokenProvider, TokenProvider>();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
-
             app.MapControllers();
 
             app.Run();
