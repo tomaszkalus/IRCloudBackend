@@ -2,6 +2,7 @@
 
 using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
+using IRCloudBackend.Infrastructure.DTO.Post;
 using IRCloudBackend.Infrastructure.DTO.User;
 
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace IRCloudBackend.Controllers
             _context = context;
         }
 
-        // GET: api/UserProfile/5
+        // GET: api/user/5
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDTO>> GetUserProfile(string username)
         {
@@ -42,45 +43,70 @@ namespace IRCloudBackend.Controllers
             return userDTO;
         }
 
-        // PUT: api/UserProfile/5
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> PutUserProfile(UpdateUserProfileDTO userProfileDTO)
-        //{
-        //    string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        // PATCH: api/user/
+        [HttpPatch]
+        public async Task<IActionResult> PatchUserProfile(UpdateUserProfileRequest request)
+        {
+            Guid userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+            var currentUser = await _context.UserProfiles.FirstOrDefaultAsync(u => u.ApplicationUserGuid == userId);
+            if (currentUser == null)
+            {
+                return BadRequest();
+            }
 
-        //}
+            if(request.AvatarUrl != null)
+            {
+                currentUser.UpdateAvatarUrl(request.AvatarUrl);
+            }
 
-        // POST: api/UserProfile
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPost]
-        //public async Task<ActionResult<UserProfile>> PostUserProfile(UserProfile userProfile)
-        //{
-        //    _context.UserProfile.Add(userProfile);
-        //    await _context.SaveChangesAsync();
+            if(request.Bio != null)
+            {
+                currentUser.UpdateBio(request.Bio);
+            }
 
-        //    return CreatedAtAction("GetUserProfile", new { id = userProfile.Id }, userProfile);
-        //}
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
 
-        //// DELETE: api/UserProfile/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteUserProfile(int id)
-        //{
-        //    var userProfile = await _context.UserProfile.FindAsync(id);
-        //    if (userProfile == null)
-        //    {
-        //        return NotFound();
-        //    }
+        // POST: api/user/saved-posts/
+        [HttpPost]
+        public async Task<IActionResult> AddPostToSaved([FromBody] int postId)
+        {
+            Post? post = await _context.Posts.FirstOrDefaultAsync(post => post.Id == postId);
+            if (post == null)
+            {
+                return NotFound();
+            }
 
-        //    _context.UserProfile.Remove(userProfile);
-        //    await _context.SaveChangesAsync();
+            Guid userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var currentUser = await _context.UserProfiles.FirstOrDefaultAsync(u => u.ApplicationUserGuid == userId);
 
-        //    return NoContent();
-        //}
+            if (currentUser == null)
+            {
+                return BadRequest();
+            }
 
-        //private bool UserProfileExists(int id)
-        //{
-        //    return _context.UserProfile.Any(e => e.Id == id);
-        //}
+            currentUser.AddPostToSavedPosts(post);
+            return NoContent();
+        }
+
+        // GET: api/user/saved-posts/
+        [HttpGet]
+        public async Task<IActionResult> GetSavedPosts()
+        {
+            Guid userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var currentUser = await _context.UserProfiles.FirstOrDefaultAsync(u => u.ApplicationUserGuid == userId);
+
+            if (currentUser == null)
+            {
+                return BadRequest();
+            }
+
+            // TODO map the usernames to saved post DTO
+            var savedPosts = currentUser.SavedPosts.Select(p => p.ToSavedPostDTO());
+
+            return Ok(savedPosts);
+        }
     }
 }
