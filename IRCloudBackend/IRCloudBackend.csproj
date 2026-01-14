@@ -32,7 +32,7 @@
 
   <ItemGroup>
     <Folder Include="Infrastructure\DbContexts\" />
-    <Folder Include="Infrastructure\DTO\Review\" />
+    <Folder Include="Application\DTO\Review\" />
     <Folder Include="Middleware\" />
     <Folder Include="Migrations\" />
   </ItemGroup>

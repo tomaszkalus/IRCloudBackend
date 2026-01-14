@@ -1,4 +1,4 @@
-﻿using IRCloudBackend.Infrastructure.DTO.Auth;
+﻿using IRCloudBackend.Application.DTO.Auth;
 
 namespace IRCloudBackend.Application.Users.Login;
 

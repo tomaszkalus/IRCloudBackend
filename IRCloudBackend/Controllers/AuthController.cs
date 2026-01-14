@@ -1,7 +1,7 @@
-﻿using IRCloudBackend.Application.Users.Login;
+﻿using IRCloudBackend.Application.Auth;
+using IRCloudBackend.Application.DTO.Auth;
+using IRCloudBackend.Application.Users.Login;
 using IRCloudBackend.Application.Users.Register;
-using IRCloudBackend.Infrastructure.Auth;
-using IRCloudBackend.Infrastructure.DTO.Auth;
 
 using Microsoft.AspNetCore.Mvc;
 

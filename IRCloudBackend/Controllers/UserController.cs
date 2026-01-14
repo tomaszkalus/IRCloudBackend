@@ -1,9 +1,9 @@
 ﻿using System.Security.Claims;
 
+using IRCloudBackend.Application.DTO.Post;
+using IRCloudBackend.Application.DTO.User;
 using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
-using IRCloudBackend.Infrastructure.DTO.Post;
-using IRCloudBackend.Infrastructure.DTO.User;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

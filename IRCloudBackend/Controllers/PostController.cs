@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
-using IRCloudBackend.Infrastructure.DTO.Post;
-using IRCloudBackend.Domain.Services;
+using IRCloudBackend.Application.Services;
+using IRCloudBackend.Application.DTO.Post;
 
 namespace IRCloudBackend.Controllers
 {

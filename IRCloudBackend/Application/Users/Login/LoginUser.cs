@@ -1,8 +1,8 @@
 ﻿using System.Security.Cryptography;
 
-using IRCloudBackend.Infrastructure.Auth;
+using IRCloudBackend.Application.Auth;
+using IRCloudBackend.Application.DTO.Auth;
 using IRCloudBackend.Infrastructure.DbContexts;
-using IRCloudBackend.Infrastructure.DTO.Auth;
 using IRCloudBackend.Infrastructure.Identity;
 
 using Microsoft.AspNetCore.Identity;

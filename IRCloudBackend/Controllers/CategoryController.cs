@@ -1,9 +1,9 @@
 ﻿using System.Linq.Expressions;
 
+using IRCloudBackend.Application.DTO.Category;
+using IRCloudBackend.Application.Services;
 using IRCloudBackend.Domain.Models;
-using IRCloudBackend.Domain.Services;
 using IRCloudBackend.Infrastructure.DbContexts;
-using IRCloudBackend.Infrastructure.DTO.Category;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
