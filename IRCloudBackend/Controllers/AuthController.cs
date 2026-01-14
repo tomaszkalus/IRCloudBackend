@@ -1,120 +1,59 @@
-﻿using System.Security.Cryptography;
-
+﻿using IRCloudBackend.Application.Users.Login;
+using IRCloudBackend.Application.Users.Register;
 using IRCloudBackend.Infrastructure.Auth;
-using IRCloudBackend.Infrastructure.DbContexts;
 using IRCloudBackend.Infrastructure.DTO.Auth;
-using IRCloudBackend.Infrastructure.Identity;
 
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace IRCloudBackend.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IConfiguration _configuration;
-    private readonly ITokenProvider _tokenProvider;
+    private readonly RegisterUser _registerUser;
+    private readonly LoginUser _loginUser;
+    private readonly RefreshTokenProvider _refreshTokenProvider;
 
-    public AuthController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IConfiguration configuration, ITokenProvider tokenProvider)
+    public AuthController(RegisterUser registerUserService, LoginUser loginUser, RefreshTokenProvider refreshTokenProvide)
     {
-        _context = context;
-        _userManager = userManager;
-        _configuration = configuration;
-        _tokenProvider = tokenProvider;
+        _registerUser = registerUserService;
+        _loginUser = loginUser;
+        _refreshTokenProvider = refreshTokenProvide;
     }
 
     [HttpPost]
     [Route("register")]
     public async Task<IActionResult> Register(RegisterDTO dto)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-
-        var user = new ApplicationUser
+        var identityResult = await _registerUser.Execute(dto);
+        if (identityResult.Succeeded)
         {
-            UserName = dto.Username,
-            Email = dto.Email,
-        };
-
-        var identityResult = await _userManager.CreateAsync(user, dto.Password);
-        if (!identityResult.Succeeded)
-        {
-            return BadRequest(identityResult.Errors);
+            return Ok();
         }
-
-        await transaction.CommitAsync();
-        return Ok();
+        return BadRequest(identityResult);
     }
 
     [HttpPost]
     [Route("login")]
     public async Task<IActionResult> Login(LoginDTO dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
-
-        if (user is null)
+        var loginResult = await _loginUser.Execute(dto);
+        if (loginResult.Success)
         {
-            return Unauthorized();
+            return Ok(loginResult.JwtTokenResponse);
         }
-
-        if (!await _userManager.CheckPasswordAsync(user, dto.Password))
-        {
-            return Unauthorized();
-        }
-
-        var roles = await _userManager.GetRolesAsync(user);
-        var accessToken = _tokenProvider.CreateToken(user, roles);
-
-        var refreshToken = new RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
-            ExpiresOnUtc = DateTime.UtcNow.AddDays(7)
-        };
-
-        _context.RefreshTokens.Add(refreshToken);
-        await _context.SaveChangesAsync();
-
-        return Ok(new JwtTokenResponse()
-        {
-            AccessToken = accessToken,
-            ExpiresIn = TimeSpan.FromMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")).TotalSeconds,
-            ExpiresOnUtc = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")),
-            RefreshToken = refreshToken.ToDto(),
-        });
+        return Unauthorized();
     }
 
     [HttpPost]
     [Route("RefreshToken")]
     public async Task<IActionResult> RefreshToken([FromBody] string token)
     {
-        RefreshToken refreshToken = await _context.RefreshTokens
-            .Include(r => r.User)
-            .FirstOrDefaultAsync(r => r.Token == token);
-
-        if (refreshToken is null || refreshToken.ExpiresOnUtc < DateTime.UtcNow)
+        var refreshTokenResult = await _refreshTokenProvider.GenerateRefreshToken(token);
+        if (refreshTokenResult.Success)
         {
-            return BadRequest();
+            return Ok(refreshTokenResult.JwtTokenResponse);
         }
-
-        var roles = await _userManager.GetRolesAsync(refreshToken.User);
-        string accessToken = _tokenProvider.CreateToken(refreshToken.User, roles);
-
-        refreshToken.Token = _tokenProvider.GenerateRefreshToken();
-        refreshToken.ExpiresOnUtc = DateTime.UtcNow.AddDays(7);
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new JwtTokenResponse()
-        {
-            AccessToken = accessToken,
-            ExpiresIn = TimeSpan.FromMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")).TotalSeconds,
-            ExpiresOnUtc = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("Jwt:ExpirationInMinutes")),
-            RefreshToken = refreshToken.ToDto(),
-        });
+        return BadRequest();
     }
 }
