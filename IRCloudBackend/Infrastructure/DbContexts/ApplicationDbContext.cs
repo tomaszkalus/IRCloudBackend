@@ -15,7 +15,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     }
 
     public DbSet<ApplicationUser> Users { get; set; }
-    public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<DomainUser> DomainUsers { get; set; }
     public DbSet<ConfirmationToken> ConfirmationTokens { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public DbSet<Category> Categories { get; set; }
@@ -85,21 +85,21 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             .HasKey(e => e.Token);
 
         // UserProfile
-        builder.Entity<UserProfile>()
+        builder.Entity<DomainUser>()
             .HasMany(u => u.SavedPosts)
             .WithMany(p => p.SavingUsers);
 
-        builder.Entity<UserProfile>()
+        builder.Entity<DomainUser>()
             .HasMany(u => u.FollowedUsers)
             .WithMany(u => u.FollowingUsers)
             .UsingEntity<Dictionary<string, object>>(
                 "UserFollows",
-                u => u.HasOne<UserProfile>().WithMany().HasForeignKey("FollowedId"),
-                u => u.HasOne<UserProfile>().WithMany().HasForeignKey("FollowerId")
+                u => u.HasOne<DomainUser>().WithMany().HasForeignKey("FollowedId"),
+                u => u.HasOne<DomainUser>().WithMany().HasForeignKey("FollowerId")
             );
 
         // UserProfile Validation
-        builder.Entity<UserProfile>()
+        builder.Entity<DomainUser>()
             .Property(u => u.Bio)
             .HasMaxLength(500);
 
