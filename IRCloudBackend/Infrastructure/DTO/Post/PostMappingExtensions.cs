@@ -1,10 +1,13 @@
-﻿using IRCloudBackend.Infrastructure.Identity;
+﻿using IRCloudBackend.Domain.Models;
+using IRCloudBackend.Infrastructure.Identity;
+
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace IRCloudBackend.Infrastructure.DTO.Post;
 
 public static class PostMappingExtensions
 {
-    public static SavedPostDTO ToSavedPostDTO(this Domain.Models.Post post, ) =>
+    public static SavedPostDTO ToSavedPostDTO(this Domain.Models.Post post) =>
         new SavedPostDTO
         {
             Id = post.Id,
@@ -14,13 +17,11 @@ public static class PostMappingExtensions
             Title = post.Title
         };
 
-    public static PostDTO ToDto(this Domain.Models.Post post, ApplicationUser applicationUser) =>
-        new PostDTO
-        {
-            CreatedAt = post.CreatedAt,
-            AuthorUsername = applicationUser.UserName,
-            Categories = post.
-        };
+    //public static PostReviewDTO ToPostReviewDto(this Review review) =>
+    //    new PostReviewDTO
+    //    {
+    //          AuthorUsername = review.Author
+    //    }
 
     //public static List<PostCategoryDTO> ToPostCategoryDto(this Domain.Models.Category category)
     //{

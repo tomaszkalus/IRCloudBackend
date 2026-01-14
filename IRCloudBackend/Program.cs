@@ -1,3 +1,4 @@
+using IRCloudBackend.Application.Users.Register;
 using IRCloudBackend.Infrastructure.Auth;
 using IRCloudBackend.Infrastructure.DbContexts;
 using IRCloudBackend.Infrastructure.Identity;
@@ -28,6 +29,7 @@ namespace IRCloudBackend
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<ITokenProvider, TokenProvider>();
+            builder.Services.AddScoped<IRegisterUser, RegisterUser>();
 
             var app = builder.Build();
 
