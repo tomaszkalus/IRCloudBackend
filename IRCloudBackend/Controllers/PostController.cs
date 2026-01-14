@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
+using IRCloudBackend.Infrastructure.DTO.Post;
+using IRCloudBackend.Domain.Services;
 
 namespace IRCloudBackend.Controllers
 {
@@ -15,10 +17,12 @@ namespace IRCloudBackend.Controllers
     public class PostController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly CategoryService _categoryService;
 
-        public PostController(ApplicationDbContext context)
+        public PostController(ApplicationDbContext context, CategoryService category)
         {
             _context = context;
+            _categoryService = category;
         }
 
         // GET: api/Post
@@ -33,7 +37,7 @@ namespace IRCloudBackend.Controllers
         // GET: api/Post/5
         // TODO map to DTO
         [HttpGet("{id}")]
-        public async Task<ActionResult<Post>> GetPost(int id)
+        public async Task<ActionResult<PostDTO>> GetPost(int id)
         {
             var post = await _context.Posts.FindAsync(id);
 
@@ -42,7 +46,12 @@ namespace IRCloudBackend.Controllers
                 return NotFound();
             }
 
-            return post;
+            var categories = await _categoryService.GetCategoryPathAsync(post.CategoryId, new CancellationToken());
+
+
+
+            //return post;
+            return Ok();
         }
 
         // PUT: api/Post/5
