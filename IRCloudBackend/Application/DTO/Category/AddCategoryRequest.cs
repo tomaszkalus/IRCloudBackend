@@ -1,6 +1,6 @@
 ﻿namespace IRCloudBackend.Application.DTO.Category;
 
-public class UpsertCategoryRequest
+public class AddCategoryRequest
 {
     public string Name { get; set; } = "";
     public bool IsEnabled { get; set; } = true;

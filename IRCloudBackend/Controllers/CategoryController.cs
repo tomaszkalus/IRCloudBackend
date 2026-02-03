@@ -1,11 +1,11 @@
-﻿using System.Linq.Expressions;
-
-using IRCloudBackend.Application.DTO.Category;
+﻿using IRCloudBackend.Application.DTO.Category;
 using IRCloudBackend.Application.Services;
 using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
 
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 
 namespace IRCloudBackend.Controllers
@@ -15,10 +15,12 @@ namespace IRCloudBackend.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly CategoryService _categoryService;
 
-        public CategoryController(ApplicationDbContext context)
+        public CategoryController(ApplicationDbContext context, CategoryService categoryService)
         {
             _context = context;
+            _categoryService = categoryService;
         }
 
         /// <summary>
@@ -29,52 +31,70 @@ namespace IRCloudBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
         {
-            return await _context
-                .Categories
-                .Where(c => c.ParentId == null)
-                .Select(CategoryService.GetCategoryProjection(7, 0))
-                .ToListAsync();
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            return Ok(categories);
         }
 
+        /// <summary>
+        /// Gets the category with a provided ID, with all of its children, recursively
+        /// </summary>
+        /// <param name="id">Category ID</param>
+        /// <returns>The category with all of its descendants</returns>
         // GET: api/Category/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryDto>> GetCategory(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var doesCategoryExist = await _context.Categories.Include(category => category.Children)
+                .AnyAsync(c => c.Id == id);
 
-            if (category == null)
+            if (!doesCategoryExist)
             {
                 return NotFound();
             }
 
-            var dto = category.ToDto();
-            return dto;
+            var cat = await _categoryService.GetCategory(id);
+
+            return cat;
         }
 
-        // PUT: api/Category/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, UpsertCategoryRequest dto)
+        /// <summary>
+        /// Performs a partial update of a category with the given ID. This endpoint uses RFC 6902 JSON Patch to partially update a category.
+        /// </summary>
+        /// <param name="id">ID of the category to modify</param>
+        /// <param name="patchDocument">Path document</param>
+        /// <returns></returns>
+        // PATCH: api/Category/5
+        [HttpPatch("{id:int}")]
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] JsonPatchDocument<EditCategoryRequest> patchDocument)
         {
-            Category? category = await _context.Categories.FindAsync(id);
-            if (category == null)
+            if (patchDocument is null)
+            {
+                return BadRequest();
+            }
+
+            var category = await _context.Categories.FindAsync(id);
+
+            if (category is null)
             {
                 return NotFound();
             }
 
-            Category updatedCategory = dto.ToEntity();
-            updatedCategory.Id = id;
-            await _context.SaveChangesAsync();
+            var categoryDto = category.ToRequestDto();
+            patchDocument.ApplyTo(categoryDto);
 
-            return NoContent();
+            category.Name = categoryDto.Name;
+            category.IsEnabled = categoryDto.IsEnabled;
+            category.ParentId = categoryDto.ParentCategoryId;
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         // POST: api/Category
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<IActionResult> AddCategory(UpsertCategoryRequest dto)
+        public async Task<IActionResult> AddCategory(AddCategoryRequest request)
         {
-            Category category = dto.ToEntity();
+            Category category = request.ToEntity();
             await _context.Categories.AddAsync(category);
             await _context.SaveChangesAsync();
 

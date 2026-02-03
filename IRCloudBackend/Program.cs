@@ -1,4 +1,5 @@
 using IRCloudBackend.Application.Auth;
+using IRCloudBackend.Application.Services;
 using IRCloudBackend.Application.Users.Register;
 using IRCloudBackend.Infrastructure.DbContexts;
 using IRCloudBackend.Infrastructure.Identity;
@@ -15,7 +16,8 @@ namespace IRCloudBackend
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddControllers();
+
+            builder.Services.AddControllers().AddNewtonsoftJson();
 
             builder.Services.AddDbContext<ApplicationDbContext>(
                 options => options.UseNpgsql(builder.Configuration.GetConnectionString("ConnStr"))
@@ -29,7 +31,8 @@ namespace IRCloudBackend
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<ITokenProvider, TokenProvider>();
-            builder.Services.AddScoped<IRegisterUser, RegisterUser>();
+            builder.Services.AddScoped<RegisterUser>();
+            builder.Services.AddScoped<CategoryService>();
 
             var app = builder.Build();
 

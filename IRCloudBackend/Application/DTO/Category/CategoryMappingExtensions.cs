@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace IRCloudBackend.Application.DTO.Category;
+﻿namespace IRCloudBackend.Application.DTO.Category;
 
 public static class CategoryMappingExtensions
 {
@@ -9,16 +7,22 @@ public static class CategoryMappingExtensions
         {
             Id = category.Id,
             Name = category.Name,
-            IsEnabled = category.IsEnabled,
-            ParentId = category.ParentId,
             SubCategories = category.Children.Select(c => c.ToDto()).ToList()
         };
 
-    public static Domain.Models.Category ToEntity(this UpsertCategoryRequest dto) =>
+    public static Domain.Models.Category ToEntity(this AddCategoryRequest dto) =>
         new Domain.Models.Category
         {
             Name = dto.Name,
             ParentId = dto.ParentCategoryId,
             IsEnabled = dto.IsEnabled,
+        };
+
+    public static EditCategoryRequest ToRequestDto(this Domain.Models.Category category) =>
+        new EditCategoryRequest
+        {
+            Name = category.Name,
+            IsEnabled = category.IsEnabled,
+            ParentCategoryId = category.ParentId,
         };
 }

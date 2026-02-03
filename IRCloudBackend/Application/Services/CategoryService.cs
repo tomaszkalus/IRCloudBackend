@@ -17,24 +17,33 @@ public class CategoryService
         _context = context;
     }
 
-    public static Expression<Func<Models.Category, CategoryDto>> GetCategoryProjection(int maxDepth, int currentDepth = 0)
-    {
-        currentDepth++;
+    /// <summary>
+    /// Retrieves all categories as a list of tree structures, recursively.
+    /// </summary>
+    /// <returns>DTO of all the top level categories and their descendants</returns>
+    public async Task<IReadOnlyList<CategoryDto>> GetAllCategoriesAsync() => await _context
+                .Categories
+                .Where(c => c.ParentId == null)
+                .Select(GetCategoryProjection(7, 0))
+                .ToListAsync();
 
-        Expression<Func<Models.Category, CategoryDto>> result = category => new CategoryDto()
-        {
-            Id = category.Id,
-            Name = category.Name,
-            SubCategories = currentDepth == maxDepth
-                ? new List<CategoryDto>()
-                : category.Children.AsQueryable()
-                    .Select(GetCategoryProjection(maxDepth, currentDepth))
-                    .ToList()
-        };
+    /// <summary>
+    /// Retrieves a category with a given ID, as a tree structure, recursively.
+    /// </summary>
+    /// <param name="categoryId">ID of the category to retrieve</param>
+    /// <returns></returns>
+    public async Task<CategoryDto> GetCategory(int categoryId) => await _context
+                .Categories
+                .Where(c => c.Id == categoryId)
+                .Select(GetCategoryProjection(7, 0))
+                .FirstAsync();
 
-        return result;
-    }
-
+    /// <summary>
+    /// Retrieves a category with a given ID, and all of its ancestors, in a list, from the root to the leaf.
+    /// </summary>
+    /// <param name="categoryId">ID of the category to retrieve</param>
+    /// <param name="ct"></param>
+    /// <returns>List of all the ancestors of the category</returns>
     public async Task<IReadOnlyList<PostCategoryDTO>> GetCategoryPathAsync(
     int categoryId,
     CancellationToken ct)
@@ -64,9 +73,25 @@ public class CategoryService
             currentId = category.ParentId;
         }
 
-        // Reversing the order so the categories are ordered from the root to leaf
         result.Reverse();
         return result;
     }
 
+    private Expression<Func<Domain.Models.Category, CategoryDto>> GetCategoryProjection(int maxDepth, int currentDepth = 0)
+    {
+        currentDepth++;
+
+        Expression<Func<Domain.Models.Category, CategoryDto>> result = category => new CategoryDto()
+        {
+            Id = category.Id,
+            Name = category.Name,
+            SubCategories = currentDepth == maxDepth
+                ? new List<CategoryDto>()
+                : category.Children.AsQueryable()
+                    .Select(GetCategoryProjection(maxDepth, currentDepth))
+                    .ToList()
+        };
+
+        return result;
+    }
 }
