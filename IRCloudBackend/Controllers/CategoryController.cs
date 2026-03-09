@@ -1,6 +1,5 @@
 ﻿using IRCloudBackend.Application.DTO.Category;
 using IRCloudBackend.Application.Services;
-using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
 
 using Microsoft.AspNetCore.JsonPatch;
@@ -94,9 +93,14 @@ namespace IRCloudBackend.Controllers
         [HttpPost]
         public async Task<IActionResult> AddCategory(AddCategoryRequest request)
         {
-            Category category = request.ToEntity();
-            await _context.Categories.AddAsync(category);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _categoryService.AddCategoryAsync(request);
+            }
+            catch (ArgumentException)
+            {
+                return NotFound($"Parent category with ID {request.ParentCategoryId} does not exist");
+            }
 
             return NoContent();
         }

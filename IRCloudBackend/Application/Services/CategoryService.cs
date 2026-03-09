@@ -2,6 +2,7 @@
 
 using IRCloudBackend.Application.DTO.Category;
 using IRCloudBackend.Application.DTO.Post;
+using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
 
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,29 @@ public class CategoryService
     public CategoryService(ApplicationDbContext context)
     {
         _context = context;
+    }
+
+    /// <summary>
+    /// Adds a new category.
+    /// </summary>
+    /// <param name="request">Request for adding the new category</param>
+    /// <exception cref="ArgumentException">If the category with the ID of the provided ParentCategoryId does not exist.</exception>
+    public async Task AddCategoryAsync(AddCategoryRequest request)
+    {
+        if (request.ParentCategoryId.HasValue)
+        {
+            bool parentCategoryExists = await _context.Categories.AnyAsync(c => c.Id == request.ParentCategoryId.Value);
+            if (!parentCategoryExists)
+            {
+                throw new ArgumentException($"Parent category with ID {request.ParentCategoryId} does not exist");
+            }
+        }
+
+        Category category = request.ToEntity();
+        await _context.Categories.AddAsync(category);
+        await _context.SaveChangesAsync();
+
+        return;
     }
 
     /// <summary>
