@@ -7,7 +7,7 @@ public class Review
     public int PostId { get; set; }
     public required Post Post { get; set; }  
     public int AuthorId { get; set; }
-    public required UserProfile Author { get; set; }
+    public required DomainUser Author { get; set; }
     public required int Rating { get; set; }
     public string? Content { get; set; } = "";
     public DateTime CreatedAt { get; set; }

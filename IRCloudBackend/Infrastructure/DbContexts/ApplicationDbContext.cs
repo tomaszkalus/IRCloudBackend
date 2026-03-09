@@ -1,12 +1,13 @@
 ﻿using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.Identity;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace IRCloudBackend.Infrastructure.DbContexts;
 
-public class ApplicationDbContext : IdentityDbContext<IdentityUser>
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -14,7 +15,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     }
 
     public DbSet<ApplicationUser> Users { get; set; }
-    public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<DomainUser> DomainUsers { get; set; }
     public DbSet<ConfirmationToken> ConfirmationTokens { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public DbSet<Category> Categories { get; set; }
@@ -22,6 +23,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Post> Posts { get; set; }
     public DbSet<PostTag> PostTags { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -83,21 +85,21 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
             .HasKey(e => e.Token);
 
         // UserProfile
-        builder.Entity<UserProfile>()
+        builder.Entity<DomainUser>()
             .HasMany(u => u.SavedPosts)
             .WithMany(p => p.SavingUsers);
 
-        builder.Entity<UserProfile>()
+        builder.Entity<DomainUser>()
             .HasMany(u => u.FollowedUsers)
             .WithMany(u => u.FollowingUsers)
             .UsingEntity<Dictionary<string, object>>(
                 "UserFollows",
-                u => u.HasOne<UserProfile>().WithMany().HasForeignKey("FollowedId"),
-                u => u.HasOne<UserProfile>().WithMany().HasForeignKey("FollowerId")
+                u => u.HasOne<DomainUser>().WithMany().HasForeignKey("FollowedId"),
+                u => u.HasOne<DomainUser>().WithMany().HasForeignKey("FollowerId")
             );
 
         // UserProfile Validation
-        builder.Entity<UserProfile>()
+        builder.Entity<DomainUser>()
             .Property(u => u.Bio)
             .HasMaxLength(500);
 

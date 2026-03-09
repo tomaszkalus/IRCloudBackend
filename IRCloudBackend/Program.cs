@@ -1,6 +1,11 @@
+using IRCloudBackend.Application.Auth;
+using IRCloudBackend.Application.Services;
+using IRCloudBackend.Application.Users.Register;
 using IRCloudBackend.Infrastructure.DbContexts;
+using IRCloudBackend.Infrastructure.Identity;
 using IRCloudBackend.Infrastructure.Services;
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -12,22 +17,25 @@ namespace IRCloudBackend
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddNewtonsoftJson();
 
             builder.Services.AddDbContext<ApplicationDbContext>(
                 options => options.UseNpgsql(builder.Configuration.GetConnectionString("ConnStr"))
                 .ReplaceService<ISqlGenerationHelper, NpgsqlSqlGenerationLowercasingHelper>()
                 );
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddScoped<ITokenProvider, TokenProvider>();
+            builder.Services.AddScoped<RegisterUser>();
+            builder.Services.AddScoped<CategoryService>();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -35,10 +43,7 @@ namespace IRCloudBackend
             }
 
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
-
-
             app.MapControllers();
 
             app.Run();

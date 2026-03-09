@@ -3,6 +3,7 @@ using System;
 using IRCloudBackend.Infrastructure.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IRCloudBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251212001552_CreateRefreshTokenEntity")]
+    partial class CreateRefreshTokenEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +24,6 @@ namespace IRCloudBackend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("DomainUserPost", b =>
-                {
-                    b.Property<int>("SavedPostsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SavingUsersId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("SavedPostsId", "SavingUsersId");
-
-                    b.HasIndex("SavingUsersId");
-
-                    b.ToTable("DomainUserPost");
-                });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Category", b =>
                 {
@@ -60,33 +48,6 @@ namespace IRCloudBackend.Migrations
                     b.HasIndex("ParentId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("IRCloudBackend.Domain.Models.DomainUser", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("ApplicationUserGuid")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AvatarUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Bio")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DomainUsers");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.IrFile", b =>
@@ -204,6 +165,29 @@ namespace IRCloudBackend.Migrations
                         {
                             t.HasCheckConstraint("CK_Review_Rating_Range", "rating >= 0 AND rating <= 5");
                         });
+                });
+
+            modelBuilder.Entity("IRCloudBackend.Domain.Models.UserProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ApplicationUserGuid")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserProfiles");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Infrastructure.Identity.ApplicationRole", b =>
@@ -444,6 +428,21 @@ namespace IRCloudBackend.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("PostUserProfile", b =>
+                {
+                    b.Property<int>("SavedPostsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SavingUsersId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("SavedPostsId", "SavingUsersId");
+
+                    b.HasIndex("SavingUsersId");
+
+                    b.ToTable("PostUserProfile");
+                });
+
             modelBuilder.Entity("UserFollows", b =>
                 {
                     b.Property<int>("FollowedId")
@@ -457,21 +456,6 @@ namespace IRCloudBackend.Migrations
                     b.HasIndex("FollowerId");
 
                     b.ToTable("UserFollows");
-                });
-
-            modelBuilder.Entity("DomainUserPost", b =>
-                {
-                    b.HasOne("IRCloudBackend.Domain.Models.Post", null)
-                        .WithMany()
-                        .HasForeignKey("SavedPostsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("IRCloudBackend.Domain.Models.DomainUser", null)
-                        .WithMany()
-                        .HasForeignKey("SavingUsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Category", b =>
@@ -494,7 +478,7 @@ namespace IRCloudBackend.Migrations
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Post", b =>
                 {
-                    b.HasOne("IRCloudBackend.Domain.Models.DomainUser", "Author")
+                    b.HasOne("IRCloudBackend.Domain.Models.UserProfile", "Author")
                         .WithMany("CreatedPosts")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -524,7 +508,7 @@ namespace IRCloudBackend.Migrations
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Review", b =>
                 {
-                    b.HasOne("IRCloudBackend.Domain.Models.DomainUser", "Author")
+                    b.HasOne("IRCloudBackend.Domain.Models.UserProfile", "Author")
                         .WithMany("CreatedReviews")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -603,15 +587,30 @@ namespace IRCloudBackend.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PostUserProfile", b =>
+                {
+                    b.HasOne("IRCloudBackend.Domain.Models.Post", null)
+                        .WithMany()
+                        .HasForeignKey("SavedPostsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IRCloudBackend.Domain.Models.UserProfile", null)
+                        .WithMany()
+                        .HasForeignKey("SavingUsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("UserFollows", b =>
                 {
-                    b.HasOne("IRCloudBackend.Domain.Models.DomainUser", null)
+                    b.HasOne("IRCloudBackend.Domain.Models.UserProfile", null)
                         .WithMany()
                         .HasForeignKey("FollowedId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("IRCloudBackend.Domain.Models.DomainUser", null)
+                    b.HasOne("IRCloudBackend.Domain.Models.UserProfile", null)
                         .WithMany()
                         .HasForeignKey("FollowerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -623,18 +622,18 @@ namespace IRCloudBackend.Migrations
                     b.Navigation("Children");
                 });
 
-            modelBuilder.Entity("IRCloudBackend.Domain.Models.DomainUser", b =>
-                {
-                    b.Navigation("CreatedPosts");
-
-                    b.Navigation("CreatedReviews");
-                });
-
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Post", b =>
                 {
                     b.Navigation("IrFiles");
 
                     b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("IRCloudBackend.Domain.Models.UserProfile", b =>
+                {
+                    b.Navigation("CreatedPosts");
+
+                    b.Navigation("CreatedReviews");
                 });
 #pragma warning restore 612, 618
         }
