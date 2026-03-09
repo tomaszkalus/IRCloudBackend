@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using IRCloudBackend.Application.DTO.Post;
+using IRCloudBackend.Application.Services;
 using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
-using IRCloudBackend.Application.Services;
-using IRCloudBackend.Application.DTO.Post;
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace IRCloudBackend.Controllers
 {

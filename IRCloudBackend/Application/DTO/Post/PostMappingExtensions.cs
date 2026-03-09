@@ -11,20 +11,10 @@ public static class PostMappingExtensions
         new SavedPostDTO
         {
             Id = post.Id,
+            AuthorName = post.Author.Username,
             AuthorId = post.AuthorId,
             CreatedAt = post.CreatedAt,
             Description = post.Description,
             Title = post.Title
         };
-
-    //public static PostReviewDTO ToPostReviewDto(this Review review) =>
-    //    new PostReviewDTO
-    //    {
-    //          AuthorUsername = review.Author
-    //    }
-
-    //public static List<PostCategoryDTO> ToPostCategoryDto(this Domain.Models.Category category)
-    //{
-    //    while(category.)
-    //}
 }
