@@ -32,6 +32,8 @@ public class TokenProvider : ITokenProvider
         [
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email!),
+            new(JwtRegisteredClaimNames.Aud, _configuration["Jwt:ValidAudience"]!),
+            new Claim(JwtRegisteredClaimNames.Iss, _configuration["Jwt:ValidIssuer"]!),
             ..roles.Select(r => new Claim(ClaimTypes.Role, r))
         ];
 
