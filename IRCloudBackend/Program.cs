@@ -1,6 +1,7 @@
 using System.Text;
 
 using IRCloudBackend.Application.Auth;
+using IRCloudBackend.Application.Authorization;
 using IRCloudBackend.Application.Services;
 using IRCloudBackend.Application.Users.Login;
 using IRCloudBackend.Application.Users.Register;
@@ -9,6 +10,7 @@ using IRCloudBackend.Infrastructure.Identity;
 using IRCloudBackend.Infrastructure.Services;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -62,6 +64,14 @@ namespace IRCloudBackend
             builder.Services.AddScoped<RegisterUser>();
             builder.Services.AddScoped<LoginUser>();
             builder.Services.AddScoped<CategoryService>();
+            builder.Services.AddScoped<PostService>();
+            builder.Services.AddScoped<DomainUserService>();
+
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy("PostOwnershipPolicy", policy =>
+                    policy.Requirements.Add(new SamePostAuthorRequirement()));
+
+            builder.Services.AddSingleton<IAuthorizationHandler, PostAuthorizationHandler>();
 
             var app = builder.Build();
 

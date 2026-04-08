@@ -1,8 +1,11 @@
-﻿using IRCloudBackend.Application.DTO.Post;
+﻿using System.Security.Claims;
+
+using IRCloudBackend.Application.DTO.Post;
 using IRCloudBackend.Application.Services;
 using IRCloudBackend.Domain.Models;
 using IRCloudBackend.Infrastructure.DbContexts;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,107 +15,88 @@ namespace IRCloudBackend.Controllers
     [ApiController]
     public class PostController : ControllerBase
     {
+        private readonly PostService _postService;
         private readonly ApplicationDbContext _context;
-        private readonly CategoryService _categoryService;
+        private readonly IAuthorizationService _authorizationService;
 
-        public PostController(ApplicationDbContext context, CategoryService category)
+        public PostController(PostService postService, ApplicationDbContext applicationDbContext, IAuthorizationService authorizationService)
         {
-            _context = context;
-            _categoryService = category;
-        }
-
-        // GET: api/Post
-        // TODO Add pagination
-        // TODO map to DTO
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Post>>> GetPosts()
-        {
-            return await _context.Posts.ToListAsync();
+            _postService = postService;
+            _context = applicationDbContext;
+            _authorizationService = authorizationService;
         }
 
         // GET: api/Post/5
-        // TODO map to DTO
         [HttpGet("{id}")]
-        public async Task<ActionResult<PostDTO>> GetPost(int id)
+        public async Task<ActionResult<PostDTO>> GetPost(int id, CancellationToken ct)
         {
-            var post = await _context.Posts.FindAsync(id);
+            var postDto = await _postService.GetPostAsync(id, ct);
+            return postDto == null ? NotFound() : Ok(postDto);
+        }
+
+        // PUT: api/Post/5
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> EditPost(int id, EditPostRequest request)
+        {
+            var post = await _context.Posts.Include(p => p.Author).FirstOrDefaultAsync(p => p.Id == id);
 
             if (post == null)
             {
                 return NotFound();
             }
 
-            var categories = await _categoryService.GetCategoryPathAsync(post.CategoryId, new CancellationToken());
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, post, "PostOwnershipPolicy");
 
-
-
-            //return post;
-            return Ok();
-        }
-
-        // PUT: api/Post/5
-        // TODO Authorize so only the creator can edit the post
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPost(int id, Post post)
-        {
-            if (id != post.Id)
+            if (!authorizationResult.Succeeded)
             {
-                return BadRequest();
+                return Forbid();
             }
 
-            _context.Entry(post).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PostExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            await _postService.EditPostAsync(request, post);
             return NoContent();
         }
 
         // POST: api/Post
-        // TODO Authorize
-        // TODO map to DTO
         [HttpPost]
-        public async Task<ActionResult<Post>> PostPost(Post post)
+        [Authorize]
+        public async Task<ActionResult<Post>> CreatePost(CreatePostRequest request)
         {
-            _context.Posts.Add(post);
-            await _context.SaveChangesAsync();
+            if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
 
-            return CreatedAtAction("GetPost", new { id = post.Id }, post);
+            bool success = await _postService.CreatePostAsync(request, userId);
+            return success ? NoContent() : NotFound("Category with a given ID does not exist");
         }
 
         // DELETE: api/Post/5
-        // TODO Authorize so only the creator can edit the post
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeletePost(int id)
         {
-            var post = await _context.Posts.FindAsync(id);
+            var post = await _context.Posts.Include(p => p.Author)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (post == null)
             {
                 return NotFound();
             }
 
-            _context.Posts.Remove(post);
-            await _context.SaveChangesAsync();
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, post, "PostOwnershipPolicy");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
 
+            if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            await _postService.DeletePostAsync(post, userId);
             return NoContent();
-        }
-
-        private bool PostExists(int id)
-        {
-            return _context.Posts.Any(e => e.Id == id);
         }
     }
 }
