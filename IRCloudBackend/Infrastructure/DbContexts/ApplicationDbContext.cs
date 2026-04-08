@@ -21,7 +21,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Category> Categories { get; set; }
     public DbSet<IrFile> IrFiles { get; set; }
     public DbSet<Post> Posts { get; set; }
-    public DbSet<PostTag> PostTags { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
@@ -108,9 +107,5 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             .HasMany(c => c.Children)
             .WithOne()
             .HasForeignKey(c => c.ParentId);
-
-        // PostTag Validation
-        builder.Entity<PostTag>()
-            .Property(p => p.Tag).HasMaxLength(20);
     }
 }
