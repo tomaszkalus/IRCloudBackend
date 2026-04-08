@@ -10,19 +10,20 @@ public class PostService
 {
     private readonly ApplicationDbContext _context;
     private readonly CategoryService _categoryService;
+    private readonly DomainUserService _domainUserService;
 
-    public PostService(ApplicationDbContext context, CategoryService categoryService)
+    public PostService(ApplicationDbContext context, CategoryService categoryService, DomainUserService domainUserService)
     {
         _context = context;
         _categoryService = categoryService;
+        _domainUserService = domainUserService;
     }
 
     public async Task<PostDTO?> GetPostAsync(int postId, CancellationToken ct)
     {
-
         var post = await _context.Posts
                 .Include(p => p.Author)
-                .FirstOrDefaultAsync(p => p.Id == postId);
+                .FirstOrDefaultAsync(p => p.Id == postId, ct);
 
         if (post == null)
         {
@@ -43,43 +44,18 @@ public class PostService
         return postDto;
     }
 
-    public async Task<bool> EditPostAsync(int id, EditPostRequest request, Guid applicationUserId)
+    public async Task EditPostAsync(EditPostRequest request, Post post)
     {
-        var domainUser = await _context.DomainUsers.FirstOrDefaultAsync(u => u.ApplicationUserGuid == applicationUserId);
-
-        if (domainUser == null)
-        {
-            throw new ApplicationException();
-        }
-
-        var post = await _context.Posts.FindAsync(id);
-
-        if (post == null)
-        {
-            return false;
-        }
-
-        if (domainUser.Id != post.AuthorId)
-        {
-            return false;
-        }
-
         post.Title = request.Title;
         post.Description = request.Description;
         post.CategoryId = request.CategoryId;
 
         await _context.SaveChangesAsync();
-        return true;
     }
 
     public async Task<bool> CreatePostAsync(CreatePostRequest request, Guid applicationUserId)
     {
-        var domainUser = await _context.DomainUsers.FirstOrDefaultAsync(u => u.ApplicationUserGuid == applicationUserId);
-
-        if (domainUser == null)
-        {
-            return false;
-        }
+        var domainUser = await _domainUserService.GetDomainUser(applicationUserId);
 
         var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
         if (!categoryExists)
@@ -101,29 +77,16 @@ public class PostService
         return true;
     }
 
-    public async Task<bool> DeletePostAsync(int id, Guid applicationUserId)
+    public async Task DeletePostAsync(Post post, Guid applicationUserId)
     {
         var domainUser = await _context.DomainUsers.FirstOrDefaultAsync(u => u.ApplicationUserGuid == applicationUserId);
 
         if (domainUser == null)
         {
-            return false;
-        }
-
-        var post = await _context.Posts.FindAsync(id);
-        if (post == null)
-        {
-            return false;
-        }
-
-        if(post.AuthorId != domainUser.Id)
-        {
-            return false;
+            throw new ApplicationException("The identity user does not have a corresponding DomainUser");
         }
 
         _context.Posts.Remove(post);
         await _context.SaveChangesAsync();
-
-        return true;
     }
 }

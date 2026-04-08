@@ -3,9 +3,11 @@
 using IRCloudBackend.Application.DTO.Post;
 using IRCloudBackend.Application.Services;
 using IRCloudBackend.Domain.Models;
+using IRCloudBackend.Infrastructure.DbContexts;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace IRCloudBackend.Controllers
 {
@@ -14,10 +16,14 @@ namespace IRCloudBackend.Controllers
     public class PostController : ControllerBase
     {
         private readonly PostService _postService;
+        private readonly ApplicationDbContext _context;
+        private readonly IAuthorizationService _authorizationService;
 
-        public PostController(PostService postService)
+        public PostController(PostService postService, ApplicationDbContext applicationDbContext, IAuthorizationService authorizationService)
         {
             _postService = postService;
+            _context = applicationDbContext;
+            _authorizationService = authorizationService;
         }
 
         // GET: api/Post/5
@@ -33,15 +39,22 @@ namespace IRCloudBackend.Controllers
         [Authorize]
         public async Task<IActionResult> EditPost(int id, EditPostRequest request)
         {
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var post = await _context.Posts.Include(p => p.Author).FirstOrDefaultAsync(p => p.Id == id);
 
-            if (userId == null)
+            if (post == null)
             {
-                return Unauthorized();
+                return NotFound();
             }
 
-            bool success = await _postService.EditPostAsync(id, request, new Guid(userId));
-            return success ? NoContent() : NotFound();
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, post, "PostOwnershipPolicy");
+
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+
+            await _postService.EditPostAsync(request, post);
+            return NoContent();
         }
 
         // POST: api/Post
@@ -49,15 +62,13 @@ namespace IRCloudBackend.Controllers
         [Authorize]
         public async Task<ActionResult<Post>> CreatePost(CreatePostRequest request)
         {
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
+            if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
             {
                 return Unauthorized();
             }
 
-            bool success = await _postService.CreatePostAsync(request, new Guid(userId));
-
-            return success ? NoContent() : NotFound();
+            bool success = await _postService.CreatePostAsync(request, userId);
+            return success ? NoContent() : NotFound("Category with a given ID does not exist");
         }
 
         // DELETE: api/Post/5
@@ -65,15 +76,27 @@ namespace IRCloudBackend.Controllers
         [Authorize]
         public async Task<IActionResult> DeletePost(int id)
         {
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
+            var post = await _context.Posts.Include(p => p.Author)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (post == null)
+            {
+                return NotFound();
+            }
+
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, post, "PostOwnershipPolicy");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+
+            if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
             {
                 return Unauthorized();
             }
 
-            bool success = await _postService.DeletePostAsync(id, new Guid(userId));
-
-            return success ? NoContent() : NotFound();
+            await _postService.DeletePostAsync(post, userId);
+            return NoContent();
         }
     }
 }
