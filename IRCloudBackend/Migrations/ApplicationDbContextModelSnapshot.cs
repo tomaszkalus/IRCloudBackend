@@ -147,29 +147,6 @@ namespace IRCloudBackend.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("IRCloudBackend.Domain.Models.PostTag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Tag")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("PostTags");
-                });
-
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Review", b =>
                 {
                     b.Property<int>("Id")
@@ -509,17 +486,6 @@ namespace IRCloudBackend.Migrations
                     b.Navigation("Author");
 
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("IRCloudBackend.Domain.Models.PostTag", b =>
-                {
-                    b.HasOne("IRCloudBackend.Domain.Models.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Review", b =>
