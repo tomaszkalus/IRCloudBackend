@@ -9,7 +9,6 @@ public class PostDTO
     public int NumberOfSaves { get; set; }
     public List<PostCategoryDTO> CategoryPath { get; set; } = new();
     public List<PostReviewDTO> Reviews { get; set; } = new();
-    public List<string> Tags { get; set; } = new();
     public string AuthorUsername { get; set; } = "";
     public DateTime CreatedAt { get; set; }
 }

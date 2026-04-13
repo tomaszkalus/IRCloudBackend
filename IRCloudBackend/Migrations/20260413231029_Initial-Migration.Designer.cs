@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IRCloudBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260103021303_RenamedUserProfileToDomainUser")]
-    partial class RenamedUserProfileToDomainUser
+    [Migration("20260413231029_Initial-Migration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -83,9 +83,13 @@ namespace IRCloudBackend.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.ToTable("UserProfiles");
+                    b.ToTable("DomainUsers");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.IrFile", b =>
@@ -144,29 +148,6 @@ namespace IRCloudBackend.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Posts");
-                });
-
-            modelBuilder.Entity("IRCloudBackend.Domain.Models.PostTag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Tag")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("PostTags");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Review", b =>
@@ -508,17 +489,6 @@ namespace IRCloudBackend.Migrations
                     b.Navigation("Author");
 
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("IRCloudBackend.Domain.Models.PostTag", b =>
-                {
-                    b.HasOne("IRCloudBackend.Domain.Models.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("IRCloudBackend.Domain.Models.Review", b =>

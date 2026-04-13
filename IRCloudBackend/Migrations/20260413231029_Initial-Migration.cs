@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IRCloudBackend.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -83,6 +83,22 @@ namespace IRCloudBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DomainUsers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Username = table.Column<string>(type: "text", nullable: false),
+                    ApplicationUserGuid = table.Column<Guid>(type: "uuid", nullable: false),
+                    AvatarUrl = table.Column<string>(type: "text", nullable: true),
+                    Bio = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DomainUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PasswordResetTokens",
                 columns: table => new
                 {
@@ -91,21 +107,6 @@ namespace IRCloudBackend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PasswordResetTokens", x => x.Token);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserProfiles",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ApplicationUserGuid = table.Column<Guid>(type: "uuid", nullable: false),
-                    AvatarUrl = table.Column<string>(type: "text", nullable: true),
-                    Bio = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserProfiles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -215,6 +216,26 @@ namespace IRCloudBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Token = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ExpiresOnUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Posts",
                 columns: table => new
                 {
@@ -235,9 +256,9 @@ namespace IRCloudBackend.Migrations
                         principalTable: "Categories",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Posts_UserProfiles_AuthorId",
+                        name: "FK_Posts_DomainUsers_AuthorId",
                         column: x => x.AuthorId,
-                        principalTable: "UserProfiles",
+                        principalTable: "DomainUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -253,15 +274,39 @@ namespace IRCloudBackend.Migrations
                 {
                     table.PrimaryKey("PK_UserFollows", x => new { x.FollowedId, x.FollowerId });
                     table.ForeignKey(
-                        name: "FK_UserFollows_UserProfiles_FollowedId",
+                        name: "FK_UserFollows_DomainUsers_FollowedId",
                         column: x => x.FollowedId,
-                        principalTable: "UserProfiles",
+                        principalTable: "DomainUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserFollows_UserProfiles_FollowerId",
+                        name: "FK_UserFollows_DomainUsers_FollowerId",
                         column: x => x.FollowerId,
-                        principalTable: "UserProfiles",
+                        principalTable: "DomainUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DomainUserPost",
+                columns: table => new
+                {
+                    SavedPostsId = table.Column<int>(type: "integer", nullable: false),
+                    SavingUsersId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DomainUserPost", x => new { x.SavedPostsId, x.SavingUsersId });
+                    table.ForeignKey(
+                        name: "FK_DomainUserPost_DomainUsers_SavingUsersId",
+                        column: x => x.SavingUsersId,
+                        principalTable: "DomainUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DomainUserPost_Posts_SavedPostsId",
+                        column: x => x.SavedPostsId,
+                        principalTable: "Posts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -287,50 +332,6 @@ namespace IRCloudBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PostTags",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PostId = table.Column<int>(type: "integer", nullable: false),
-                    Tag = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PostTags", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PostTags_Posts_PostId",
-                        column: x => x.PostId,
-                        principalTable: "Posts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PostUserProfile",
-                columns: table => new
-                {
-                    SavedPostsId = table.Column<int>(type: "integer", nullable: false),
-                    SavingUsersId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PostUserProfile", x => new { x.SavedPostsId, x.SavingUsersId });
-                    table.ForeignKey(
-                        name: "FK_PostUserProfile_Posts_SavedPostsId",
-                        column: x => x.SavedPostsId,
-                        principalTable: "Posts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PostUserProfile_UserProfiles_SavingUsersId",
-                        column: x => x.SavingUsersId,
-                        principalTable: "UserProfiles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Reviews",
                 columns: table => new
                 {
@@ -347,15 +348,15 @@ namespace IRCloudBackend.Migrations
                     table.PrimaryKey("PK_Reviews", x => x.Id);
                     table.CheckConstraint("CK_Review_Rating_Range", "rating >= 0 AND rating <= 5");
                     table.ForeignKey(
-                        name: "FK_Reviews_Posts_PostId",
-                        column: x => x.PostId,
-                        principalTable: "Posts",
+                        name: "FK_Reviews_DomainUsers_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "DomainUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Reviews_UserProfiles_AuthorId",
-                        column: x => x.AuthorId,
-                        principalTable: "UserProfiles",
+                        name: "FK_Reviews_Posts_PostId",
+                        column: x => x.PostId,
+                        principalTable: "Posts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -403,6 +404,11 @@ namespace IRCloudBackend.Migrations
                 column: "ParentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_DomainUserPost_SavingUsersId",
+                table: "DomainUserPost",
+                column: "SavingUsersId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_IrFiles_PostId",
                 table: "IrFiles",
                 column: "PostId");
@@ -418,14 +424,9 @@ namespace IRCloudBackend.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostTags_PostId",
-                table: "PostTags",
-                column: "PostId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PostUserProfile_SavingUsersId",
-                table: "PostUserProfile",
-                column: "SavingUsersId");
+                name: "IX_RefreshTokens_UserId",
+                table: "RefreshTokens",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_AuthorId",
@@ -465,16 +466,16 @@ namespace IRCloudBackend.Migrations
                 name: "ConfirmationTokens");
 
             migrationBuilder.DropTable(
+                name: "DomainUserPost");
+
+            migrationBuilder.DropTable(
                 name: "IrFiles");
 
             migrationBuilder.DropTable(
                 name: "PasswordResetTokens");
 
             migrationBuilder.DropTable(
-                name: "PostTags");
-
-            migrationBuilder.DropTable(
-                name: "PostUserProfile");
+                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "Reviews");
@@ -495,7 +496,7 @@ namespace IRCloudBackend.Migrations
                 name: "Categories");
 
             migrationBuilder.DropTable(
-                name: "UserProfiles");
+                name: "DomainUsers");
         }
     }
 }
